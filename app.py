@@ -11,30 +11,42 @@ from kiwipiepy import Kiwi  # Java가 필요 없는 순수 한국어 형태소 �
 # ---------------------------------------------------------
 # 1. 폰트 설정 (스크립트 기준 NanumGothic 절대 경로 우선 탐색)
 # ---------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-font_path = os.path.join(BASE_DIR, "NanumGothic.ttf")
+import os
+import streamlit as st
+import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
 
-if os.path.exists(font_path):
+# ---------------------------------------------------------
+# 폰트 자동 탐색 및 강제 등록 (로컬 & Streamlit Cloud 공용)
+# ---------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 폰트 후보 경로 목록 (저장소 내부 파일 -> Linux 패키지 -> Windows -> Mac 순서)
+candidate_fonts = [
+    os.path.join(BASE_DIR, "NanumGothic.ttf"),                          # 1. 프로젝트 폴더 내 파일
+    "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",                 # 2. Linux (Streamlit Cloud fonts-nanum)
+    "/usr/share/fonts/truetype/nanum/NanumBarunGothic.ttf",            # 3. Linux 대안
+    "C:/Windows/Fonts/malgun.ttf",                                     # 4. Windows 맑은 고딕
+    "C:/Windows/Fonts/NanumGothic.ttf",                                # 5. Windows 나눔고딕
+    "/System/Library/Fonts/Supplemental/AppleGothic.dfont",            # 6. Mac 애플고딕
+    "/Library/Fonts/NanumGothic.ttf"                                   # 7. Mac 나눔고딕
+]
+
+font_path = None
+for path in candidate_fonts:
+    if os.path.exists(path):
+        font_path = path
+        break
+
+if font_path:
+    # Matplotlib 폰트 매니저에 파일 직접 등록 (캐시 문제 완전 방지)
     font_manager.fontManager.addfont(font_path)
     font_prop = font_manager.FontProperties(fname=font_path)
     rc('font', family=font_prop.get_name())
 else:
-    # NanumGothic.ttf가 없을 경우 시스템 기본 한글 폰트로 폴백
-    system_fonts = [
-        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",  # Linux
-        "C:/Windows/Fonts/malgun.ttf",  # Windows
-        "/System/Library/Fonts/Supplemental/AppleGothic.dfont"  # Mac
-    ]
-    font_found = False
-    for p in system_fonts:
-        if os.path.exists(p):
-            font_path = p
-            font_prop = font_manager.FontProperties(fname=font_path)
-            rc('font', family=font_prop.get_name())
-            font_found = True
-            break
+    st.warning("⚠️ 한글 폰트를 찾을 수 없어 기본 폰트로 표시됩니다. GitHub에 NanumGothic.ttf를 업로드하거나 packages.txt를 추가해 주세요.")
 
-plt.rcParams['axes.unicode_minus'] = False  # 음수 부호 깨짐 방지
+plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
 
 # ---------------------------------------------------------
 # 2. 감성 어휘 사전 정의
